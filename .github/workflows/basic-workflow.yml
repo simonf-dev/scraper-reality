@@ -12,61 +12,20 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  testing:
 
     runs-on: python3.9
     steps:
     - uses: actions/checkout@v3
-
-    - name: Build package
+    - name: Install packages
       run: |
-        make build
+        make dev-build
     - name: Mypy checks
       run: |
         make type-check
     - name: Pylint checks
       run: |
         make pylint-check
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: packages
-        path: ./dist
-  installation-sanity-test:
-    runs-on: ubuntu-latest
-    needs: [build]
-    strategy:
-      matrix:
-        version: ["3.8", "3.9", "3.10", "3.11"]
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/download-artifact@v3
-        with:
-          name: packages
-          path: ./dist
-      - uses: "./.github/templates/setup"
-        with:
-          python-version: ${{ matrix.version }}
-      - name: Package installation
-        run: |
-          pip install dist/stock_summary*.whl
-      - name: Sanity tests
-        run: |
-          stock_summary_tool --help
-          stock_summary_tool import-data -e stock_summary/demo_datasets/entries -p stock_summary/demo_datasets/portfolio -y
-          stock_summary_tool export-data -d output_files/
-
-  unit-tests:
-    runs-on: ubuntu-latest
-    needs: [build]
-    strategy:
-      matrix:
-        version: ["3.8", "3.9", "3.10", "3.11"]
-    steps:
-      - uses: actions/checkout@v3
-      - uses: "./.github/templates/setup"
-        with:
-          python-version: ${{ matrix.version }}
-      - name: Unit tests
-        run: |
-          make test
+    - name: Tests
+      run: |
+        make tests
