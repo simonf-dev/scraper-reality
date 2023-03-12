@@ -10,5 +10,6 @@ If I had more time, I'd finish this list of things:
 2. Improve exception handling.
 3. API checking using schema packages
 4. Data re-reading (possibility to clean DB)
-5. Frontend improvement
+5. Frontend improvement (video sign, whole page reformatting)
 6. Mask Postgres password for production
+7. Add variable count of estates per page / paging
