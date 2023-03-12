@@ -1,0 +1,39 @@
+.estate-list {
+    color: #000;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font: inherit;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+}
+.estate {
+    color: #000;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font: inherit;
+    text-align: left;
+    margin-bottom: 1.5em;
+    position: relative;
+    display: block;
+    border-top: 0;
+    padding-top: 0;
+    order: 0;
+ }
+.basic {
+    color: #000;
+    text-align: left;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font: inherit;
+    display: block;
+    position: relative;
+    margin-top: 0.25em;
+    min-height: 70px;
+ }

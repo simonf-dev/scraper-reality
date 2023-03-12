@@ -1,40 +1,43 @@
+""" Init scripts that will be executed at the each start of container"""
 import psycopg2
+from scrapy.crawler import CrawlerProcess
 
-conn = psycopg2.connect(
-    host="localhost", database="scrapDb", user="scrapReality", password="Password001+"
+import db_api as PostgresAPI
+from settings import (
+    POSTGRES_DB,
+    POSTGRES_HOST,
+    POSTGRES_PASSWORD,
+    POSTGRES_USER,
+    get_logger,
 )
+from spiders import EstateSpider
 
-# Open a cursor to perform database operations
-cur = conn.cursor()
+logging = get_logger(__name__)
 
-# Execute a command: this creates a new table
-cur.execute(
-    "CREATE TABLE IF NOT EXISTS flat (id int PRIMARY KEY,"
-    "title varchar (150) NOT NULL,"
-    "place varchar (150) NOT NULL,"
-    "price varchar (20) NOT NULL,"
-    "url varchar (100) NOT NULL,"
-    "date_added date DEFAULT CURRENT_TIMESTAMP);"
-)
-cur.execute(
-    "CREATE TABLE IF NOT EXISTS  media (id int PRIMARY KEY,"
-    "video boolean NOT NULL,"
-    "url varchar (150) NOT NULL,"
-    "flat_id int,"
-    "FOREIGN KEY (flat_id) REFERENCES flat (id))"
-)
 
-cur.execute(
-    "CREATE TABLE IF NOT EXISTS attribute (id int PRIMARY KEY,"
-    "text varchar(100) NOT NULL)"
-)
+def parse_actual_estates(
+    con: "psycopg2.connection", reality_per_page: int = 20
+) -> None:
+    """Parse www.sreality.cz estates to the DB."""
+    logging.info(
+        "Starting to initialize crawler with reality_per_page %s", reality_per_page
+    )
+    process = CrawlerProcess(
+        {"USER_AGENT": "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)"}
+    )
+    process.crawl(EstateSpider, con, reality_per_page=reality_per_page)
+    process.start()
 
-cur.execute(
-    "CREATE TABLE IF NOT EXISTS attribute_flat (attribute_id int,"
-    "flat_id int, FOREIGN KEY (flat_id) REFERENCES flat (id),"
-    "FOREIGN KEY (attribute_id) REFERENCES attribute (id))"
-)
-conn.commit()
 
-cur.close()
-conn.close()
+if __name__ == "__main__":
+    #  Creates connection with DB for all init scripts
+    logging.info("Running initial scripts for the application.")
+    connection = PostgresAPI.connect_to_db(
+        host=POSTGRES_HOST,
+        database=POSTGRES_DB,
+        user=POSTGRES_USER,
+        password=POSTGRES_PASSWORD,
+    )
+    PostgresAPI.create_tables(connection.cursor())
+    parse_actual_estates(connection)
+    connection.close()

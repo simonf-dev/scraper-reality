@@ -1,87 +1,183 @@
-import logging
-
-import scrapy
-import math
-from scrapy.crawler import CrawlerProcess
+""" Spider classes for parsers"""
 import json
+import logging
+import math
+from typing import Any, Dict, Iterator, List, cast
+
 import psycopg2
-from settings import  POSTGRES_HOST, POSTGRES_PASSWORD, POSTGRES_USER, POSTGRES_DB, SUPPORTED_PROPORTIONS
-class RealitySpider(scrapy.Spider):
-    reality_offers_count = 20
+import scrapy
 
-    web_page = "https://www.sreality.cz/api/cs/v2/estates?category_main_cb=1&category_type_cb=1&page={page}&per_page={per_page}"
-    name = 'realityspider'
-    def parse_url(self, estate) -> str:
-        estate_id = estate["_embedded"]["favourite"]["_links"]["self"]["href"].split("/")[-1]
+import db_api as PostgresAPI
+from settings import SUPPORTED_PROPORTIONS
+
+
+class EstateSpider(scrapy.Spider):  # type: ignore
+    """EstateSpider to parse requests from www.sreality.cz It uses API"""
+
+    web_page = (
+        "https://www.sreality.cz/api/cs/v2/estates?category_main_cb=1&category_type_cb=1&"
+        "page={page}&per_page={per_page}"
+    )
+    name = "EstateSpider"
+
+    def __init__(
+        self, connection: "psycopg2.connection", reality_per_page: int
+    ) -> None:
+        self.connection = connection
+        self.reality_per_page = reality_per_page
+        super().__init__()
+
+    def _parse_url(self, estate: Dict["str", Any]) -> str:
+        """
+        Gets estate API structure and tries to parse url from it by the defined rules.
+        Uses SUPPORTED_PROPORTIONS dict, which maps names to values in URL.
+        """
+        estate_id = estate["_embedded"]["favourite"]["_links"]["self"]["href"].split(
+            "/"
+        )[-1]
         locality = estate["seo"]["locality"]
-        parsed_flat_type = estate["name"].strip().split(" ")[2]
-        flat_type = SUPPORTED_PROPORTIONS[parsed_flat_type] if parsed_flat_type in SUPPORTED_PROPORTIONS else "unknown"
-        return f"https://www.sreality.cz/detail/prodej/byt/{flat_type}/{locality}/{estate_id}"
+        parsed_estate_type = estate["name"].strip().split(" ")[2]
+        estate_type = (
+            SUPPORTED_PROPORTIONS[parsed_estate_type]
+            if parsed_estate_type in SUPPORTED_PROPORTIONS
+            else "unknown"
+        )
+        returned_url = (
+            f"https://www.sreality.cz/detail/prodej/"
+            f"byt/{estate_type}/{locality}/{estate_id}"
+        )
+        logging.debug("Returning URL %s", returned_url)
+        return returned_url
 
-    def check_estate(self, estate) -> None:
-        """ Checks that esponse API response is in correct format."""
+    def check_images(self, estate: Dict["str", Any], count: int = 3) -> List[str]:
+        """
+        Checks that images are in correct format and returns first {count} images.
+        If there is bad API response from estate, then raises error.
+        """
+        returned_images = []
+        try:
+            for image in estate["_links"]["images"][:count]:
+                if not isinstance(image["href"], str):
+                    raise ValueError(
+                        f"Estate image value in API call has wrong type, expected: str, "
+                        f"actual type: {type(image['href'])}"
+                    )
+                returned_images.append(image["href"])
+        except (KeyError, IndexError, TypeError) as err:
+            err_msg = f"Cannot get {count} images from the estate API structure. Estate: {estate}"
+            logging.error(err_msg)
+            raise ValueError(err_msg) from err
+        logging.debug("Returning links for images: %s", returned_images)
+        return returned_images
+
+    def check_labels(self, estate: Dict[str, Any]) -> List[str]:
+        """
+        Checks that API labels are in correct format and returns them.
+        If there is bad API response, then raises error.
+        """
+        try:
+            for label in estate["labels"]:
+                if not isinstance(label, str):
+                    raise ValueError(
+                        f"Estate label value in API call has wrong type, expected: str, "
+                        f"actual type: {type(label)}"
+                    )
+        except (KeyError, IndexError, TypeError) as err:
+            err_msg = (
+                f"Cannot get labels from the estate API structure. Estate: {estate}"
+            )
+            logging.error(err_msg)
+            raise ValueError(err_msg) from err
+        logging.debug("Returning links for images: %s", estate["labels"])
+        return cast(List[str], estate["labels"])
+
+    def check_estate(self, estate: Dict[str, Any]) -> PostgresAPI.EstateDb:
+        """
+        Checks that API response is in correct format (its EstateDb part)
+         and returns TypedDict structure which mirrors estate structure in DB
+        """
         try:
             if not isinstance(estate["price"], int):
-                raise ValueError(f"Estate price value in API call has wrong value, expected: int, "
-                                 f"actual value: {estate['price']}")
+                raise ValueError(
+                    f"Estate price value in API call has wrong type, expected: int, "
+                    f"actual value: {type(estate['price'])}"
+                )
             for key in ["name", "locality"]:
                 if not isinstance(estate[key], str):
-                    raise ValueError(f"Estate {key} value in API call has wrong value, expected type: str, "
-                                     f"actual value: {estate[key]}")
-            for image in estate["_links"]["images"][:3]:
-                if not isinstance(image["href"], str):
-                    raise ValueError(f"Estate image value in API call has wrong value, expected: str, "
-                                     f"actual value: {estate['price']}")
+                    raise ValueError(
+                        f"Estate {key} value in API call has wrong type, expected type: str, "
+                        f"actual value: {type(estate[key])}"
+                    )
             if not isinstance(estate["has_video"], bool):
-                raise ValueError(f"Estate has_video value in API call has wrong value, expected: str, "
-                                 f"actual value: {estate['price']}")
-        except KeyError as e:
-            raise ValueError("Estate API response doesn't have proper values.") from e
+                raise ValueError(
+                    f"Estate has_video value in API call has wrong type, expected: str, "
+                    f"actual type: {type(estate['has_video'])}"
+                )
+            estate_url = self._parse_url(estate)
+        except (KeyError, IndexError, ValueError, TypeError) as err:
+            err_msg = f"Estate API response doesn't have proper values. Estate value: {estate}"
+            logging.error(err_msg)
+            raise ValueError(err_msg) from err
+        returned_struct: PostgresAPI.EstateDb = {
+            "price": estate["price"],
+            "url": estate_url,
+            "place": estate["locality"],
+            "title": estate["name"],
+            "has_video": estate["has_video"],
+        }
+        logging.debug("Checked estate and returning %s", returned_struct)
+        return returned_struct
 
-    def write_to_db(self, estates):
-        conn = psycopg2.connect(
-            host=POSTGRES_HOST, database=POSTGRES_DB, user=POSTGRES_USER, password=POSTGRES_PASSWORD
-        )
-        cur = conn.cursor()
+    def write_to_db(self, estates: List[Dict[str, Any]]) -> None:
+        """
+        Gets estates API response and tries to parse them and saves them to DB.
+        """
+        cur = self.connection.cursor()
+        logging.info("Writing to DB %s estates.", len(estates))
         for estate in estates:
-            self.check_estate(estate)
-            cur.execute("INSERT INTO flat (title, place, price, url, has_video) VALUES (%s, %s, %s, %s, %s )"
-                        "RETURNING id;"
-                        ,(estate["name"], estate["locality"], estate["price"], self.parse_url(estate),
-                          estate["has_video"]))
-            flat_id = cur.fetchone()[0]
-            for index, image in enumerate(estate["_links"]["images"][:3]):
-                cur.execute("INSERT INTO media(url, flat_id) values (%s,%s);",
-                            (image["href"], flat_id))
-            for index, label in enumerate(estate["labels"]):
-                logging.warning(label)
-                cur.execute("SELECT id FROM reality_attribute WHERE text = %s;", (label,))
-                attr_q_res = cur.fetchone()
-                if attr_q_res is None:
-                    cur.execute("INSERT INTO reality_attribute (text) VALUES (%s) RETURNING id;", (label,))
-                    attr_q_res = cur.fetchone()
-                attr_id = attr_q_res[0]
-                cur.execute("INSERT INTO attribute_flat (flat_id, attribute_id) VALUES (%s, %s)",
-                            (flat_id, attr_id))
+            try:
+                estate_db = self.check_estate(estate)
+                images = self.check_images(estate)
+                labels = self.check_labels(estate)
+            except ValueError:
+                err_msg = (
+                    f"Failed to parse {estate} estate into DB. Continuing with others."
+                )
+                logging.error(err_msg)
+                continue
+            estate_id = PostgresAPI.insert_estate_to_db(cur, estate_db)
 
-        conn.commit()
-        conn.close()
+            for image in images:
+                PostgresAPI.insert_media_to_db(cur, image, estate_id)
+            for label in labels:
+                feature_id = PostgresAPI.insert_or_get_feature(cur, label)
+                PostgresAPI.connect_estate_feature(cur, estate_id, feature_id)
+        self.connection.commit()
+        logging.info("Successfully wrote %s estates to DB", len(estates))
 
+    def start_requests(self, reality_count: int = 500) -> Iterator[scrapy.Request]:
+        """
+        Method that starts to iterate requests for estates. Needed for async.
+        """
+        logging.info(
+            "Starting requests with reality_count %s and reality per page %s",
+            reality_count,
+            self.reality_per_page,
+        )
+        iterations = math.ceil(reality_count / self.reality_per_page) + 1
+        # need to make correct number of iterations in edge cases
+        if reality_count % self.reality_per_page != 0:
+            iterations += 1
+        for page in range(1, reality_count // self.reality_per_page):
+            yield scrapy.Request(
+                url=self.web_page.format(per_page=self.reality_per_page, page=page),
+                callback=self.parse,
+            )
 
-    def start_requests(self, reality_count: int = 500):
-        for page in range(1, reality_count // self.reality_offers_count):
-            yield scrapy.Request(url=self.web_page.format(per_page=self.reality_offers_count, page=page), callback=self.parse)
-
-    def parse(self, response):
+    def parse(self, response: Any, **kwargs: Any) -> None:
+        """
+        Tries to parse response and save it to DB. If there is an exception, it's caught by
+        methods level above or by methods level below.
+        """
         json_object = json.loads(response.body)
         self.write_to_db(json_object["_embedded"]["estates"])
-
-
-if __name__ == '__main__':
-
-    process = CrawlerProcess({
-        'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)'
-    })
-
-    process.crawl(RealitySpider)
-    process.start()
