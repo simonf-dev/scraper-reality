@@ -3,64 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <title>Aktuální nabídka bytů </title>
-    <link rel="icon" type="image/svg+xml" href="/home/simon/Projects/scraper-reality/src/templates/house-solid.svg">
-    <link rel="stylesheet" href="/home/simon/Projects/scraper-reality/src/css/main.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css"
-          rel="stylesheet"
-          integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD"
-          crossorigin="anonymous">
     <script src="https://cdn.tailwindcss.com"></script>
-
 </head>
-<body>
-<div class="flex flex-wrap gap p-24">
-    {% for estate in estates %}
-    <div class=" w-1/2 p-4 bg-clip-border border-2 border-zinc-900 border-dashed">
-        <div class="flex">
-            {% for image in estate.images %}
-            <div class="w-1/3">
-                <a href=" {{estate.url }}">
-                    <img src="{{ image }}" class="bd-placeholder-img p-0.5"></a>
-                {% if estate.has_video and loop.index == 1 %}
-                <div></div>
-                {% endif %}
-            </div>
-            {% endfor %}
+<body >
+
+<div class="container mx-auto py-8 min-w-md">
+    <div class="flex flex-wrap">
+        <div class="w-full">
+
+            <nav class="flex mb-4" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                    <li class="inline-flex items-center">
+                        <a href="#"
+                           class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+                            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20"
+                                 xmlns="http://www.w3.org/2000/svg">
+                                <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
+                            </svg>
+                            Domovská stránka
+                        </a>
+                    </li>
+                </ol>
+            </nav>
+            <h2 class="font-serif hover:font-serif mb-4 text-3xl font-extrabold leading-none tracking-tight text-gray-900 md:text-4xl">
+                Aktuální nemovitosti k prodeji</h2>
+
         </div>
-        <div class="basic">
-            <h2>
-                <a href="{{ estate.url }}" class="title">
-                    <div class="name ng-binding font-serif hover:font-serif text-2xl text-red-600 antialiased p-0.5">{{ estate.name }}</div>
-                </a>
-            </h2>
-            <div class="font-serif hover:font-serif py-1.5 text-lg">{{ estate.place }}</div>
 
-
+        {% for estate in estates %}
+        <div class=" w-1/2 p-4 ring-4 ring-red-400/60 shadow-inner">
             <div class="flex">
-                <div class="btn-group w-3/4 flex space-x-1">
-                    {% for attribute in estate.attributes %}
-                    {% if attribute != "" %}
-                    <div class="border-2 rounded-md border-zinc-500 w-1/6 text-center text-sm py-1 px-0.5 font-serif hover:font-serif">
-					<span>{{ attribute}}</span>
-				</div>
+                {% for image in estate.images %}
+                <div class="w-1/3">
+                    <a href=" {{estate.url }}">
+                        <img src="{{ image }}" class="bd-placeholder-img p-0.5"></a>
+                    {% if estate.has_video and loop.index == 1 %}
+                    <div></div>
                     {% endif %}
-                    {% endfor %}
                 </div>
-                <div class="w-1/4 text-right font-black font-serif hover:font-serif text-xl tracking-wider">
-                        <span class="price ng-scope">
+                {% endfor %}
+            </div>
+            <div class="basic">
+                <h2>
+                    <a href="{{ estate.url }}" class="title">
+                        <div class="font-serif hover:font-serif text-2xl text-red-600 antialiased p-0.5">
+                            {{ estate.name }}
+                        </div>
+                    </a>
+                </h2>
+                <div class="font-serif hover:font-serif py-1.5 text-lg">{{ estate.place }}</div>
+
+
+                <div class="flex">
+                    <div class="btn-group w-3/4 flex space-x-1">
+                        {% for attribute in estate.attributes %}
+                        {% if attribute != "" %}
+                        <div class="border-2 rounded-full border-zinc-500 w-1/6 text-center text-sm py-1 px-0.5 font-serif hover:font-serif">
+                            <span>{{ attribute}}</span>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    <div class="w-1/4 text-right font-black font-serif hover:font-serif text-xl tracking-wider">
+                        <span>
                 {% if estate.price == 1 %}
                  Informace o ceně u RK
                  {% else %}
-                {{ estate.price }} CZK
+                {{ '{:,.0f}'.format(estate.price).replace(',', ' ') }} CZK
                             {% endif %}
 			</span></div>
 
+                </div>
+
             </div>
-
         </div>
+        {% endfor %}
+        <div class="w-full mt-4">
+<footer class="p-4 bg-white rounded-lg shadow md:px-6 md:py- dark:bg-gray-900">
+    <div class="sm:flex sm:items-center sm:justify-between">
+        <a href="https://flowbite.com/" class="flex items-center mb-4 sm:mb-0">
+            <img src="https://flowbite.com/docs/images/logo.svg" class="h-8 mr-3" alt="Flowbite Logo" />
+            <span class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">Šimon Fouček</span>
+        </a>
+        <ul class="flex flex-wrap items-center mb-6 text-sm text-gray-500 sm:mb-0 dark:text-gray-400">
+            <li>
+                <a href="#" class="mr-4 hover:underline md:mr-6 ">About</a>
+            </li>
+            <li>
+                <a href="#" class="mr-4 hover:underline md:mr-6">Privacy Policy</a>
+            </li>
+            <li>
+                <a href="#" class="mr-4 hover:underline md:mr-6 ">Licensing</a>
+            </li>
+            <li>
+                <a href="#" class="hover:underline">Contact</a>
+            </li>
+        </ul>
     </div>
-    {% endfor %}
+    <hr class="my-20 border-gray-200 sm:mx-auto dark:border-gray-700 lg:my-8" />
+    <span class="block text-sm text-gray-500 sm:text-center dark:text-gray-400">© 3 <a href="https://flowbite.com/" class="hover:underline">Šimon Fouček™</a>. All Rights Reserved.
+    </span>
+</footer>
 </div>
-
+    </div>
+</div>
 </body>
 </html>
