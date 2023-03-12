@@ -24,7 +24,7 @@ logging = get_logger(__name__)
 def results_page() -> str:
     """Results from the scraped realities"""
     cur = CONNECTION.cursor()
-    estates = PostgresAPI.get_oldest_estates_by_id(cur, 20)
+    estates = PostgresAPI.get_oldest_estates_by_id(cur, 500)
     estates_html = [
         {
             "name": estate[1],
