@@ -22,8 +22,8 @@ POSTGRES_PASSWORD = (
     if os.environ.get("POSTGRES_PASSWORD") is not None
     else "Password001+"
 )
-LOGGING_LEVEL = (
-    str(os.environ["LOGGING_LEVEL"])
+LOGGING_LEVEL = str(
+    os.environ["LOGGING_LEVEL"]
     if os.environ.get("LOGGING_LEVEL") is not None
     else logging.INFO
 )
