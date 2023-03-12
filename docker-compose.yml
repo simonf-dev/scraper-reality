@@ -17,12 +17,15 @@ services:
       POSTGRES_PASSWORD: 'Password001+'
       POSTGRES_USER: "scrapReality"
       POSTGRES_DB: "scrapDb"
-      POSTGRES_HOST: "localhost"
+      POSTGRES_HOST: "database"
     restart: always
+    links:
+      - db:database
     depends_on:
       - db
     volumes:
       - .:/app
     expose:
       - 8080
-    network_mode: "host"
+    ports:
+      - 8080:8080
