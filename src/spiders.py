@@ -1,6 +1,5 @@
 """ Spider classes for parsers"""
 import json
-import logging
 import math
 from typing import Any, Dict, Iterator, List, cast
 
@@ -8,7 +7,9 @@ import psycopg2
 import scrapy
 
 import db_api as PostgresAPI
-from settings import SUPPORTED_PROPORTIONS
+from settings import SUPPORTED_PROPORTIONS, get_logger
+
+logging = get_logger(__name__)
 
 
 class EstateSpider(scrapy.Spider):  # type: ignore
@@ -88,7 +89,7 @@ class EstateSpider(scrapy.Spider):  # type: ignore
             )
             logging.error(err_msg)
             raise ValueError(err_msg) from err
-        logging.debug("Returning links for images: %s", estate["labels"])
+        logging.debug("Returning features: %s", estate["labels"])
         return cast(List[str], estate["labels"])
 
     def check_estate(self, estate: Dict[str, Any]) -> PostgresAPI.EstateDb:
