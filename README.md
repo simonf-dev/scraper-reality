@@ -11,3 +11,4 @@ If I had more time, I'd finish this list of things:
 3. API checking using schema packages
 4. Data re-reading (possibility to clean DB)
 5. Frontend improvement
+6. Mask Postgres password for production
