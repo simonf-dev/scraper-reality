@@ -22,11 +22,14 @@ POSTGRES_PASSWORD = (
     if os.environ.get("POSTGRES_PASSWORD") is not None
     else "Password001+"
 )
-LOGGING_LEVEL = str(
-    os.environ["LOGGING_LEVEL"]
-    if os.environ.get("LOGGING_LEVEL") is not None
-    else logging.INFO
-)
+levels = {"DEBUG": logging.DEBUG, "NOTSET": logging.NOTSET, "INFO": logging.INFO,
+          "WARNING": logging.WARNING, "ERROR": logging.ERROR, "CRITICAL": logging.CRITICAL}
+try:
+    logging_str = str(os.environ["LOGGING_LEVEL"]).upper() if os.environ.get("LOGGING_LEVEL") is not None else "INFO"
+    LOGGING_LEVEL = levels[logging_str]
+except KeyError:
+    LOGGING_LEVEL = logging.INFO
+
 SUPPORTED_PROPORTIONS = {
     "1+kk": "1+kk",
     "2+kk": "2+kk",
