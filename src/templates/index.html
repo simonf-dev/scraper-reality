@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Aktuální nabídka bytů </title>
+    <link rel="icon" type="image/svg+xml" href="/home/simon/Projects/scraper-reality/src/templates/house-solid.svg">
+    <link rel="stylesheet" href="/home/simon/Projects/scraper-reality/src/css/main.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD"
+          crossorigin="anonymous">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+</head>
+<body>
+<div class="flex flex-wrap gap p-24">
+    {% for estate in estates %}
+    <div class=" w-1/2 p-4 bg-clip-border border-2 border-zinc-900 border-dashed">
+        <div class="flex">
+            {% for image in estate.images %}
+            <div class="w-1/3">
+                <a href=" {{estate.url }}">
+                    <img src="{{ image }}" class="bd-placeholder-img p-0.5"></a>
+                {% if estate.has_video and loop.index == 1 %}
+                <div></div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        <div class="basic">
+            <h2>
+                <a href="{{ estate.url }}" class="title">
+                    <div class="name ng-binding font-serif hover:font-serif text-2xl text-red-600 antialiased p-0.5">{{ estate.name }}</div>
+                </a>
+            </h2>
+            <div class="font-serif hover:font-serif py-1.5 text-lg">{{ estate.place }}</div>
+
+
+            <div class="flex">
+                <div class="btn-group w-3/4 flex space-x-1">
+                    {% for attribute in estate.attributes %}
+                    {% if attribute != "" %}
+                    <div class="border-2 rounded-md border-zinc-500 w-1/6 text-center text-sm py-1 px-0.5 font-serif hover:font-serif">
+					<span>{{ attribute}}</span>
+				</div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                <div class="w-1/4 text-right font-black font-serif hover:font-serif text-xl tracking-wider">
+                        <span class="price ng-scope">
+                {% if estate.price == 1 %}
+                 Informace o ceně u RK
+                 {% else %}
+                {{ estate.price }} CZK
+                            {% endif %}
+			</span></div>
+
+            </div>
+
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+</body>
+</html>
