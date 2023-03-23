@@ -28,7 +28,7 @@ class EstateDb(TypedDict):
 
 
 def connect_to_db(
-    host: str, database: str, user: str, password: str
+    host: str, database: str, user: str, password: str, port: int
 ) -> "psycopg2.connection":
     """Wrapper for connection to the DB."""
     connection = psycopg2.connect(
@@ -36,6 +36,7 @@ def connect_to_db(
         database=database,
         user=user,
         password=password,
+        port=port
     )
     return connection
 

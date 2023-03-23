@@ -18,6 +18,7 @@ services:
       POSTGRES_USER: "scrapReality"
       POSTGRES_DB: "scrapDb"
       POSTGRES_HOST: "database"
+      POSTGRES_PORT: 5432
     restart: always
     links:
       - db:database

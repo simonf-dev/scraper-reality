@@ -1,0 +1,4 @@
+Flask==2.2.3
+psycopg2_binary==2.9.5
+Scrapy==2.8.0
+waitress==2.1.2
