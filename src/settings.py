@@ -28,6 +28,12 @@ POSTGRES_PORT = (
     if os.environ.get("POSTGRES_PORT") is not None
     else 5432
 )
+
+APP_PORT = (
+    int(os.environ["APP_PORT"])
+    if os.environ.get("APP_PORT") is not None
+    else 80
+)
 levels = {"DEBUG": logging.DEBUG, "NOTSET": logging.NOTSET, "INFO": logging.INFO,
           "WARNING": logging.WARNING, "ERROR": logging.ERROR, "CRITICAL": logging.CRITICAL}
 try:

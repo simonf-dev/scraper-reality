@@ -8,6 +8,7 @@ from settings import (
     POSTGRES_PASSWORD,
     POSTGRES_USER,
     POSTGRES_PORT,
+    APP_PORT
 )
 
 app = Flask(__name__)
@@ -44,4 +45,4 @@ def results_page() -> str:
 if __name__ == "__main__":
     from waitress import serve
 
-    serve(app, host="0.0.0.0", port=8000)
+    serve(app, host="0.0.0.0", port=APP_PORT)
