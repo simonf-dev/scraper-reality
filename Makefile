@@ -12,7 +12,7 @@ pylint-check:
 
 .PHONY: dev-build
 dev-build:
-	pip3 install -r devel-requirements.in -r build/requirements.in
+	pip3 install -r devel-requirements.in -r requirements.txt
 
 .PHONY: tests
 tests:
