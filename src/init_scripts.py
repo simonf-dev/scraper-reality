@@ -9,7 +9,7 @@ from settings import (
     POSTGRES_PASSWORD,
     POSTGRES_USER,
     get_logger,
-    POSTGRES_PORT
+    POSTGRES_PORT,
 )
 from spiders import EstateSpider
 
@@ -38,7 +38,7 @@ if __name__ == "__main__":
         database=POSTGRES_DB,
         user=POSTGRES_USER,
         password=POSTGRES_PASSWORD,
-        port=POSTGRES_PORT
+        port=POSTGRES_PORT,
     )
     PostgresAPI.create_tables(connection.cursor())
     parse_actual_estates(connection)

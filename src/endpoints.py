@@ -8,7 +8,7 @@ from settings import (
     POSTGRES_PASSWORD,
     POSTGRES_USER,
     POSTGRES_PORT,
-    APP_PORT
+    APP_PORT,
 )
 
 app = Flask(__name__)
@@ -17,7 +17,7 @@ CONNECTION = PostgresAPI.connect_to_db(
     database=POSTGRES_DB,
     user=POSTGRES_USER,
     password=POSTGRES_PASSWORD,
-    port=POSTGRES_PORT
+    port=POSTGRES_PORT,
 )
 
 

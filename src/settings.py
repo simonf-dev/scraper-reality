@@ -29,15 +29,21 @@ POSTGRES_PORT = (
     else 5432
 )
 
-APP_PORT = (
-    int(os.environ["APP_PORT"])
-    if os.environ.get("APP_PORT") is not None
-    else 80
-)
-levels = {"DEBUG": logging.DEBUG, "NOTSET": logging.NOTSET, "INFO": logging.INFO,
-          "WARNING": logging.WARNING, "ERROR": logging.ERROR, "CRITICAL": logging.CRITICAL}
+APP_PORT = int(os.environ["APP_PORT"]) if os.environ.get("APP_PORT") is not None else 80
+levels = {
+    "DEBUG": logging.DEBUG,
+    "NOTSET": logging.NOTSET,
+    "INFO": logging.INFO,
+    "WARNING": logging.WARNING,
+    "ERROR": logging.ERROR,
+    "CRITICAL": logging.CRITICAL,
+}
 try:
-    logging_str = str(os.environ["LOGGING_LEVEL"]).upper() if os.environ.get("LOGGING_LEVEL") is not None else "INFO"
+    logging_str = (
+        str(os.environ["LOGGING_LEVEL"]).upper()
+        if os.environ.get("LOGGING_LEVEL") is not None
+        else "INFO"
+    )
     LOGGING_LEVEL = levels[logging_str]
 except KeyError:
     LOGGING_LEVEL = logging.INFO

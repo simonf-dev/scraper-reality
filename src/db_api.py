@@ -32,11 +32,7 @@ def connect_to_db(
 ) -> "psycopg2.connection":
     """Wrapper for connection to the DB."""
     connection = psycopg2.connect(
-        host=host,
-        database=database,
-        user=user,
-        password=password,
-        port=port
+        host=host, database=database, user=user, password=password, port=port
     )
     return connection
 
