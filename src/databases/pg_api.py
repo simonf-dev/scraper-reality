@@ -1,13 +1,15 @@
 """ Middleware for the PostgresAPI"""
-from typing import Any, TypedDict, cast, List
+from typing import Any, List, TypedDict, cast
+
 import psycopg2
+
 from settings import get_logger
 
 logging = get_logger(__name__)
 
 
 class EstateFrontendResponse(TypedDict):
-    """Structure that's returned back for the frontend view."""
+    """Structure that's returned back for the frontend query from PostgresDB"""
 
     id: int
     title: str
@@ -25,6 +27,7 @@ class EstateDb(TypedDict):
     place: str
     url: str
     has_video: bool
+    region: int
 
 
 def connect_to_db(
@@ -44,7 +47,8 @@ def insert_estate_to_db(
     """Inserts estate to DB. Returns it's id"""
     logging.debug("Inserting estate %s to DB.", estate_db)
     cur.execute(
-        "INSERT INTO estate (title, place, price, url, has_video) VALUES (%s, %s, %s, %s, %s )"
+        "INSERT INTO estate (title, place, price, url, has_video, region) "
+        "VALUES (%s, %s, %s, %s, %s, %s )"
         "RETURNING id;",
         (
             estate_db["title"],
@@ -52,6 +56,7 @@ def insert_estate_to_db(
             estate_db["price"],
             estate_db["url"],
             estate_db["has_video"],
+            estate_db["region"],
         ),
     )
     returned_response = cur.fetchone()

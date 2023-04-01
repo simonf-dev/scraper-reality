@@ -1,48 +1,45 @@
 """ Endpoints for the whole app"""
-from flask import Flask, render_template
+import random
+from typing import Union
 
-import db_api as PostgresAPI
-from settings import (
-    POSTGRES_DB,
-    POSTGRES_HOST,
-    POSTGRES_PASSWORD,
-    POSTGRES_USER,
-    POSTGRES_PORT,
-    APP_PORT,
-)
+from flask import Flask, render_template, request
+
+import constants as const
+from databases import db_proxy as DBProxy
+from settings import get_logger, APP_PORT
 
 app = Flask(__name__)
-CONNECTION = PostgresAPI.connect_to_db(
-    host=POSTGRES_HOST,
-    database=POSTGRES_DB,
-    user=POSTGRES_USER,
-    password=POSTGRES_PASSWORD,
-    port=POSTGRES_PORT,
-)
+logging = get_logger(__name__)
 
 
 @app.route("/")
-def results_page() -> str:
+def results_page() -> Union[tuple[str, int], str]:
     """Results from the scraped realities"""
-    cur = CONNECTION.cursor()
-    estates = PostgresAPI.get_oldest_estates_by_id(cur, 500)
-    estates_html = [
-        {
-            "name": estate[1],
-            "place": estate[2],
-            "url": estate[3],
-            "price": estate[4],
-            "images": estate[5].strip().split("$"),
-            "attributes": estate[6].strip().split("$"),
-            "has_video": estate[7],
-        }
-        for estate in estates
-    ]
-    cur.close()  # type: ignore
-    return render_template("index.html", estates=estates_html)
+    region = request.args.get("region")
+    try:
+        region_int = (
+            int(region)
+            if region is not None
+            else random.randint(*const.get_region_spread())
+        )
+    except ValueError:
+        return "Bad format of the region param.", 400
+    if (
+        region_int < const.get_region_spread()[0]
+        or region_int > const.get_region_spread()[1]
+    ):
+        return "Region is not in the range.", 400
+    estates = DBProxy.get_oldest_estates_for_region(region_int, 200)
+    logging.info("Sending response back to %s", request.access_route)
+    return render_template(
+        "index.html",
+        estates=estates,
+        regions=const.REGION_MAPPING,
+        selected_region=const.REGION_MAPPING[region_int],
+    )
 
 
 if __name__ == "__main__":
     from waitress import serve
-
     serve(app, host="0.0.0.0", port=APP_PORT)
+

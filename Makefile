@@ -1,6 +1,6 @@
 .PHONY: style
 style:
-	black src
+	black src && isort src
 
 .PHONY: type-check
 type-check:

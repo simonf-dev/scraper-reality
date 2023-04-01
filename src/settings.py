@@ -31,6 +31,29 @@ POSTGRES_PORT = (
 
 APP_PORT = int(os.environ["APP_PORT"]) if os.environ.get("APP_PORT") is not None else 80
 
+MONGO_CONNECTION_STRING = (
+    os.environ["MONGO_CONNECTION_STRING"]
+    if os.environ.get("MONGO_CONNECTION_STRING") is not None
+    else None
+)
+
+MONGO_HOST = (
+    os.environ["MONGO_HOST"]
+    if os.environ.get("MONGO_HOST") is not None
+    else "localhost"
+)
+
+MONGO_USER = (
+    os.environ["MONGO_USER"]
+    if os.environ.get("MONGO_USER") is not None
+    else "scrapReality"
+)
+
+MONGO_PASSWORD = (
+    os.environ["MONGO_PASSWORD"]
+    if os.environ.get("MONGO_PASSWORD") is not None
+    else "Password001+"
+)
 levels = {
     "DEBUG": logging.DEBUG,
     "NOTSET": logging.NOTSET,

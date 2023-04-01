@@ -4,12 +4,13 @@
     <meta charset="UTF-8">
     <title>Aktuální nabídka bytů </title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.6.4/flowbite.min.css" rel="stylesheet" />
 </head>
 <body>
 
 <div class="container mx-auto py-8 min-w-md">
     <div class="flex flex-wrap">
-        <div class="w-full">
+        <div class="w-1/2">
             <nav class="flex mb-4" aria-label="Breadcrumb">
                 <ol class="inline-flex items-center space-x-1 md:space-x-3">
                     <li class="inline-flex items-center">
@@ -26,14 +27,27 @@
             </nav>
             <h2 class="font-serif hover:font-serif mb-4 text-3xl font-extrabold leading-none tracking-tight text-gray-900 md:text-4xl">
                 Aktuální nemovitosti k prodeji</h2>
-
+        </div>
+<div class="w-1/2 justify-end items-end flex">
+            <button id="dropdownDefaultButton" data-dropdown-toggle="dropdown"
+                    class="mb-4 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800" type="button">{{ selected_region }} <svg class="w-4 h-4 ml-2" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
+<!-- Dropdown menu -->
+<div id="dropdown" class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700">
+    <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
+        {% for region_id, region_str in regions.items() %}
+        <li>
+        <a href="?region={{ region_id }}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"> {{ region_str }}</a>
+      </li>
+        {% endfor %}
+    </ul>
+</div>
         </div>
 
         {% for estate in estates %}
         <div class="w-1/2">
             <div class="shadow-lg border border-gray-100 p-4 m-2 rounded">
                 <div class="flex -m-[18px] mb-4">
-                    {% for image in estate.images %}
+                    {% for image in estate.medias %}
                     <div>
                         <a href=" {{estate.url }}">
                             <img src="{{ image }}" class="bd-placeholder-img p-0.5 rounded"></a>
@@ -56,7 +70,7 @@
 
                     <div class="flex">
                         <div class="btn-group w-3/4 flex space-x-1">
-                            {% for attribute in estate.attributes %}
+                            {% for attribute in estate.features %}
                             {% if attribute != "" %}
                             <div><span
                                     class="border text-xs rounded border-zinc-500 text-center text-sm py-1 px-2 font-serif hover:font-serif">{{ attribute}}</span>
@@ -110,5 +124,6 @@
         </div>
     </div>
 </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.6.4/flowbite.min.js"></script>
 </body>
 </html>

@@ -3,10 +3,10 @@ import json
 import math
 from typing import Any, Dict, Iterator, List, cast
 
-import psycopg2
 import scrapy
 
-import db_api as PostgresAPI
+from databases import db_proxy as DBProxy
+from databases import structures
 from settings import SUPPORTED_PROPORTIONS, get_logger
 
 logging = get_logger(__name__)
@@ -17,14 +17,11 @@ class EstateSpider(scrapy.Spider):  # type: ignore
 
     web_page = (
         "https://www.sreality.cz/api/cs/v2/estates?category_main_cb=1&category_type_cb=1&"
-        "page={page}&per_page={per_page}"
+        "page={page}&per_page={per_page}&locality_region_id={region_id}"
     )
     name = "EstateSpider"
 
-    def __init__(
-        self, connection: "psycopg2.connection", reality_per_page: int
-    ) -> None:
-        self.connection = connection
+    def __init__(self, reality_per_page: int) -> None:
         self.reality_per_page = reality_per_page
         super().__init__()
 
@@ -92,7 +89,7 @@ class EstateSpider(scrapy.Spider):  # type: ignore
         logging.debug("Returning features: %s", estate["labels"])
         return cast(List[str], estate["labels"])
 
-    def check_estate(self, estate: Dict[str, Any]) -> PostgresAPI.EstateDb:
+    def check_estate(self, estate: Dict[str, Any]) -> structures.EstateDb:
         """
         Checks that API response is in correct format (its EstateDb part)
          and returns TypedDict structure which mirrors estate structure in DB
@@ -119,22 +116,25 @@ class EstateSpider(scrapy.Spider):  # type: ignore
             err_msg = f"Estate API response doesn't have proper values. Estate value: {estate}"
             logging.error(err_msg)
             raise ValueError(err_msg) from err
-        returned_struct: PostgresAPI.EstateDb = {
+        returned_struct: structures.EstateDb = {
             "price": estate["price"],
             "url": estate_url,
             "place": estate["locality"],
             "title": estate["name"],
             "has_video": estate["has_video"],
+            "medias": [],
+            "region": 0,
+            "features": [],
         }
         logging.debug("Checked estate and returning %s", returned_struct)
         return returned_struct
 
-    def write_to_db(self, estates: List[Dict[str, Any]]) -> None:
+    def write_to_db(self, estates: List[Dict[str, Any]], region: int) -> None:
         """
         Gets estates API response and tries to parse them and saves them to DB.
         """
-        cur = self.connection.cursor()
         logging.info("Writing to DB %s estates.", len(estates))
+        estates_db = []
         for estate in estates:
             try:
                 estate_db = self.check_estate(estate)
@@ -146,14 +146,11 @@ class EstateSpider(scrapy.Spider):  # type: ignore
                 )
                 logging.error(err_msg)
                 continue
-            estate_id = PostgresAPI.insert_estate_to_db(cur, estate_db)
-
-            for image in images:
-                PostgresAPI.insert_media_to_db(cur, image, estate_id)
-            for label in labels:
-                feature_id = PostgresAPI.insert_or_get_feature(cur, label)
-                PostgresAPI.connect_estate_feature(cur, estate_id, feature_id)
-        self.connection.commit()
+            estate_db["medias"] = images
+            estate_db["features"] = labels
+            estate_db["region"] = region
+            estates_db.append(estate_db)
+        DBProxy.insert_estates_to_db(estates_db)
         logging.info("Successfully wrote %s estates to DB", len(estates))
 
     def start_requests(self, reality_count: int = 500) -> Iterator[scrapy.Request]:
@@ -170,10 +167,13 @@ class EstateSpider(scrapy.Spider):  # type: ignore
         if reality_count % self.reality_per_page != 0:
             iterations += 1
         for page in range(1, reality_count // self.reality_per_page):
-            yield scrapy.Request(
-                url=self.web_page.format(per_page=self.reality_per_page, page=page),
-                callback=self.parse,
-            )
+            for region in range(1, 15):
+                yield scrapy.Request(
+                    url=self.web_page.format(
+                        per_page=self.reality_per_page, page=page, region_id=region
+                    ),
+                    callback=self.parse,
+                )
 
     def parse(self, response: Any, **kwargs: Any) -> None:
         """
@@ -181,4 +181,12 @@ class EstateSpider(scrapy.Spider):  # type: ignore
         methods level above or by methods level below.
         """
         json_object = json.loads(response.body)
-        self.write_to_db(json_object["_embedded"]["estates"])
+        try:
+            region = int(json_object["filter"]["locality_region_id"])
+        except (KeyError, IndexError, ValueError, TypeError) as err:
+            err_msg = (
+                f"Cannot get region from the API response. Response: {json_object}"
+            )
+            logging.error(err_msg)
+            raise ValueError(err_msg) from err
+        self.write_to_db(json_object["_embedded"]["estates"], region)
