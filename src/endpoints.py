@@ -1,5 +1,5 @@
 """ Endpoints for the whole app"""
-from flask import Flask, render_template, request
+from flask import Flask, render_template
 
 import db_api as PostgresAPI
 from settings import (
@@ -7,7 +7,8 @@ from settings import (
     POSTGRES_HOST,
     POSTGRES_PASSWORD,
     POSTGRES_USER,
-    get_logger,
+    POSTGRES_PORT,
+    APP_PORT,
 )
 
 app = Flask(__name__)
@@ -16,8 +17,8 @@ CONNECTION = PostgresAPI.connect_to_db(
     database=POSTGRES_DB,
     user=POSTGRES_USER,
     password=POSTGRES_PASSWORD,
+    port=POSTGRES_PORT,
 )
-logging = get_logger(__name__)
 
 
 @app.route("/")
@@ -37,7 +38,6 @@ def results_page() -> str:
         }
         for estate in estates
     ]
-    logging.info("Sending response back to %s", request.access_route)
     cur.close()  # type: ignore
     return render_template("index.html", estates=estates_html)
 
@@ -45,4 +45,4 @@ def results_page() -> str:
 if __name__ == "__main__":
     from waitress import serve
 
-    serve(app, host="0.0.0.0", port=8080)
+    serve(app, host="0.0.0.0", port=APP_PORT)

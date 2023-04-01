@@ -22,6 +22,15 @@ POSTGRES_PASSWORD = (
     if os.environ.get("POSTGRES_PASSWORD") is not None
     else "Password001+"
 )
+
+POSTGRES_PORT = (
+    int(os.environ["POSTGRES_PORT"])
+    if os.environ.get("POSTGRES_PORT") is not None
+    else 5432
+)
+
+APP_PORT = int(os.environ["APP_PORT"]) if os.environ.get("APP_PORT") is not None else 80
+
 levels = {
     "DEBUG": logging.DEBUG,
     "NOTSET": logging.NOTSET,
