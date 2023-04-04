@@ -5,6 +5,9 @@ Use scrapy framework to scrape the first 500 items (title, image url) from sreal
 
 It took 12 hours to make it.
 
+Another ~4 hours took to implement NoSQL database to the project, which you can see in pull requests. Live NoSQL version should run on:
+https://frontend-scraper.azurewebsites.net
+
 ## How to use
 1. App can be started with commands:
 `docker compose build && docker-compose up`
