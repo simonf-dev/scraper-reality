@@ -60,6 +60,6 @@ def get_oldest_estates_for_region(
 ) -> List[structures.EstateFrontendResponse]:
     """Returns oldest estates for region."""
     estates = (
-        connection_db["estates"].find({"region": region}).sort("_id", 1).limit(limit)
+        connection_db["estates"].find({"region": region}).sort("_id", -1).limit(limit)
     )
     return list(estates)
