@@ -42,4 +42,3 @@ def results_page() -> Union[tuple[str, int], str]:
 if __name__ == "__main__":
     from waitress import serve
     serve(app, host="0.0.0.0", port=APP_PORT)
-

@@ -4,7 +4,6 @@ from scrapy.crawler import CrawlerProcess
 from databases import db_proxy as DbProxy
 from settings import (
     get_logger,
-    POSTGRES_PORT,
 )
 from spiders import EstateSpider
 
